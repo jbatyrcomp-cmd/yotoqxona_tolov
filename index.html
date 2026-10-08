@@ -1,0 +1,1665 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Yotoqxona To'lov Tizimi</title>
+
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================================================
+       1. ASOSIY DIZAYN TIZIMI VA O'ZGARUVCHILAR (CSS VARIABLES)
+       ========================================================================== */
+    :root {
+      --bg-page: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --border-color: #E2E8F0;
+      --border-focus: #3B82F6;
+      --primary: #1E3A8A;
+      /* Rasmiy quyuq ko'k (Academic Navy) */
+      --primary-hover: #172554;
+      --primary-light: #EFF6FF;
+      --accent: #2563EB;
+      --text-main: #0F172A;
+      /* To'q matn */
+      --text-muted: #64748B;
+      /* Yordamchi kulrang matn */
+      --text-light: #94A3B8;
+
+      --success: #059669;
+      --success-bg: #ECFDF5;
+      --success-border: #A7F3D0;
+
+      --warning: #D97706;
+      --warning-bg: #FFFBEB;
+      --warning-border: #FDE68A;
+
+      --danger: #DC2626;
+      --danger-bg: #FEF2F2;
+      --danger-border: #FECACA;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+
+      --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /* Boshlang'ich reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.5;
+      font-size: 15px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      padding-bottom: 30px;
+    }
+
+    /* Asosiy konteyner */
+    .app-container {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ==========================================================================
+       2. HEADER VA MA'MURIYAT BLOKI
+       ========================================================================== */
+    .app-header {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .header-icon svg {
+      width: 26px;
+      height: 26px;
+    }
+
+    .header-title-box h1 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+      line-height: 1.3;
+    }
+
+    .header-title-box p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ==========================================================================
+       3. KARTALAR VA BO'LIMLAR (CARDS)
+       ========================================================================== */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .card-title .step-badge {
+      background: var(--primary);
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 700;
+      width: 20px;
+      height: 20px;
+      border-radius: var(--radius-full);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ==========================================================================
+       4. FORMA ELEMENTLARI (INPUTS, SELECTS, LABELS)
+       ========================================================================== */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .form-control {
+      width: 100%;
+      height: 48px;
+      padding: 0 14px;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--text-main);
+      background-color: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      transition: all 0.2s ease;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .form-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .form-control:disabled {
+      background-color: #F1F5F9;
+      color: var(--text-light);
+      cursor: not-allowed;
+      border-color: var(--border-color);
+    }
+
+    /* Select ko'rinishi */
+    .select-wrapper {
+      position: relative;
+    }
+
+    .select-wrapper::after {
+      content: "";
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 10px;
+      height: 6px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-size: contain;
+      pointer-events: none;
+    }
+
+    /* F.I.Sh. qidiruv va ro'yxat */
+    .search-input-box {
+      position: relative;
+    }
+
+    .search-input-box input {
+      padding-left: 38px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      width: 18px;
+      height: 18px;
+      pointer-events: none;
+    }
+
+    .students-list {
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: #FFFFFF;
+      margin-top: 6px;
+      display: none;
+    }
+
+    .students-list.show {
+      display: block;
+    }
+
+    .student-item {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: background 0.15s ease;
+    }
+
+    .student-item:last-child {
+      border-bottom: none;
+    }
+
+    .student-item:hover,
+    .student-item:active {
+      background-color: var(--primary-light);
+    }
+
+    .student-item-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .student-item-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .empty-list-msg {
+      padding: 18px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* ==========================================================================
+       5. TALABA RASMIY KARTASI (STUDENT DETAIL CARD)
+       ========================================================================== */
+    .student-detail-card {
+      display: none;
+      background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+      border: 1.5px solid var(--primary-light);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .student-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed var(--border-color);
+    }
+
+    .student-card-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.3;
+    }
+
+    .student-card-id {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    .reset-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      transition: background 0.2s;
+    }
+
+    .reset-btn:hover {
+      background: #F1F5F9;
+      color: var(--danger);
+    }
+
+    .student-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .info-cell {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+    }
+
+    .info-cell-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .info-cell-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-top: 2px;
+    }
+
+    /* Holat nishonlari (Status Badges) */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-badge.unpaid {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid var(--danger-border);
+    }
+
+    .status-badge.paid {
+      background: var(--success-bg);
+      color: var(--success);
+      border: 1px solid var(--success-border);
+    }
+
+    .status-badge.pending {
+      background: var(--warning-bg);
+      color: var(--warning);
+      border: 1px solid var(--warning-border);
+    }
+
+    /* ==========================================================================
+       6. TO'LOV FORMASI VA FAYL YUKLASH
+       ========================================================================== */
+    .payment-form-card {
+      display: none;
+    }
+
+    .amount-input-container {
+      position: relative;
+    }
+
+    .amount-input {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--primary);
+      padding-right: 60px;
+    }
+
+    .currency-suffix {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    /* Tezkor summa tugmalari (Quick Amount Chips) */
+    .chips-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .chip-btn {
+      background: #F1F5F9;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-full);
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .chip-btn:hover,
+    .chip-btn:active {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Fayl yuklash zonasi */
+    .upload-zone {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #FAFAFA;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+
+    .upload-zone:hover,
+    .upload-zone:active {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .upload-icon {
+      width: 44px;
+      height: 44px;
+      background: #FFFFFF;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .upload-text-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .upload-text-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .file-hidden-input {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    /* Rasm ko'rinishi (Preview) */
+    .preview-box {
+      display: none;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      background: #FFFFFF;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .preview-thumbnail {
+      width: 60px;
+      height: 60px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      border: 1px solid var(--border-color);
+    }
+
+    .preview-info {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .preview-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .preview-size {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .preview-remove-btn {
+      background: var(--danger-bg);
+      border: 1px solid var(--danger-border);
+      color: var(--danger);
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+
+    .preview-remove-btn:hover {
+      background: #FEE2E2;
+    }
+
+    /* ==========================================================================
+       7. ASOSIY HARAKAT TUGMASI (SUBMIT BUTTON)
+       ========================================================================== */
+    .submit-btn {
+      width: 100%;
+      height: 52px;
+      background-color: var(--primary);
+      color: #FFFFFF;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 16px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+      transition: all 0.2s ease;
+      margin-top: 6px;
+    }
+
+    .submit-btn:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .submit-btn:active {
+      transform: scale(0.985);
+    }
+
+    .submit-btn:disabled {
+      background-color: #94A3B8;
+      box-shadow: none;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Yuklanish indikatori (Spinner) */
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2.5px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #FFFFFF;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ==========================================================================
+       8. NATIJA VA MUOFFAQIYAT EKRANI (SUCCESS MODAL / SCREEN)
+       ========================================================================== */
+    .result-screen {
+      display: none;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 32px 20px;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .success-icon-wrap {
+      width: 72px;
+      height: 72px;
+      background: var(--success-bg);
+      border: 2px solid var(--success-border);
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 18px auto;
+      color: var(--success);
+    }
+
+    .success-icon-wrap svg {
+      width: 40px;
+      height: 40px;
+    }
+
+    .result-title {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .result-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 22px;
+    }
+
+    .receipt-summary-box {
+      background: var(--bg-page);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      text-align: left;
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .summary-row .label {
+      color: var(--text-muted);
+    }
+
+    .summary-row .val {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .close-btn {
+      width: 100%;
+      height: 48px;
+      background: var(--text-main);
+      color: #FFFFFF;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ==========================================================================
+       9. XABARLAR (TOAST NOTIFICATIONS & BANNER)
+       ========================================================================== */
+    .alert-banner {
+      display: none;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .alert-banner.error {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid var(--danger-border);
+    }
+
+    .alert-banner.warning {
+      background: var(--warning-bg);
+      color: var(--warning);
+      border: 1px solid var(--warning-border);
+    }
+
+    .loading-overlay {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 30px;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .loading-overlay .mini-spinner {
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--border-color);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    /* Mobil qurilmalar uchun moslashuv */
+    @media (max-width: 380px) {
+      .app-container {
+        padding: 12px;
+        gap: 12px;
+      }
+
+      .card {
+        padding: 14px;
+      }
+
+      .student-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app-container">
+
+    <!-- HEADER: Muassasa va Bo'lim nomi -->
+    <header class="app-header">
+      <div class="header-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+      </div>
+      <div class="header-title-box">
+        <h1>Talabalar Turar Joyi</h1>
+        <p>To'lov kvitansiyalarini yig'ish tizimi</p>
+      </div>
+    </header>
+
+    <!-- OGOHLANTIRISH VA XATOLIK BANNERI -->
+    <div id="alertBanner" class="alert-banner" style="display: none;"></div>
+
+    <!-- YUKLANISH HOLATI (MA'LUMOTLAR OLINAYOTGANDA) -->
+    <div id="initialLoader" class="loading-overlay">
+      <div class="mini-spinner"></div>
+      <span>Talabalar ro'yxati yuklanmoqda...</span>
+    </div>
+
+    <!-- ==================== ASOSIY FORMA BLOKI ==================== -->
+    <main id="mainFlow" style="display: none; display: flex; flex-direction: column; gap: 16px;">
+
+      <!-- 1-BOSQICH: KASKADLI FILTR KARTASI -->
+      <section class="card" id="selectionCard">
+        <div class="card-title">
+          <span class="step-badge">1</span>
+          <span>Talabani aniqlash</span>
+        </div>
+
+        <!-- 1. Fakultet tanlash -->
+        <div class="form-group">
+          <label class="form-label" for="facultySelect">Fakultetni tanlang:</label>
+          <div class="select-wrapper">
+            <select id="facultySelect" class="form-control">
+              <option value="">-- Fakultetni tanlang --</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 2. Guruh tanlash -->
+        <div class="form-group">
+          <label class="form-label" for="groupSelect">Yo'nalish / Guruhni tanlang:</label>
+          <div class="select-wrapper">
+            <select id="groupSelect" class="form-control" disabled>
+              <option value="">-- Avval fakultetni tanlang --</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 3. F.I.Sh. tanlash va qidirish -->
+        <div class="form-group">
+          <label class="form-label" for="studentSearchInput">Familiya, Ism, Sharifingiz:</label>
+          <div class="search-input-box">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="studentSearchInput" class="form-control"
+              placeholder="Familiyangizni yozib qidiring..." disabled autocomplete="off">
+          </div>
+          <!-- Dinamik talabalar ro'yxati -->
+          <div id="studentsDropdownList" class="students-list"></div>
+        </div>
+      </section>
+
+      <!-- 2-BOSQICH: TANLANGAN TALABANING KARTASI (CARD) -->
+      <section class="student-detail-card" id="studentDetailCard">
+        <div class="student-card-header">
+          <div>
+            <div class="student-card-name" id="cardFullName">-</div>
+            <div class="student-card-id" id="cardStudentId">ID: -</div>
+          </div>
+          <button type="button" class="reset-btn" id="resetStudentBtn" title="Boshqa talabani tanlash">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+              <line x1="18" y1="9" x2="12" y2="15"></line>
+              <line x1="12" y1="9" x2="18" y2="15"></line>
+            </svg>
+            O'zgartirish
+          </button>
+        </div>
+
+        <div class="student-grid">
+          <div class="info-cell">
+            <div class="info-cell-label">Fakultet</div>
+            <div class="info-cell-value" id="cardFaculty">-</div>
+          </div>
+          <div class="info-cell">
+            <div class="info-cell-label">Guruh</div>
+            <div class="info-cell-value" id="cardGroup">-</div>
+          </div>
+          <div class="info-cell">
+            <div class="info-cell-label">Yotoqxona</div>
+            <div class="info-cell-value" id="cardDorm">-</div>
+          </div>
+          <div class="info-cell">
+            <div class="info-cell-label">Xona raqami</div>
+            <div class="info-cell-value" id="cardRoom">-</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 13px; font-weight: 500; color: var(--text-muted);">To'lov holati:</span>
+          <span class="status-badge unpaid" id="cardStatusBadge">⏳ To'lanmagan</span>
+        </div>
+      </section>
+
+      <!-- 3-BOSQICH: TO'LOV MA'LUMOTLARI VA KVITANSIYA YUKLASH -->
+      <section class="card payment-form-card" id="paymentFormCard">
+        <div class="card-title">
+          <span class="step-badge">2</span>
+          <span>To'lov ma'lumotlari</span>
+        </div>
+
+        <!-- To'langan summa -->
+        <div class="form-group">
+          <label class="form-label" for="amountInput">To'langan summa:</label>
+          <div class="amount-input-container">
+            <input type="text" id="amountInput" class="form-control amount-input" inputmode="numeric" placeholder="0"
+              autocomplete="off">
+            <span class="currency-suffix">so'm</span>
+          </div>
+          <!-- Tezkor summa tugmalari -->
+          <div class="chips-group">
+            <button type="button" class="chip-btn" data-val="900000">900 000</button>
+            <button type="button" class="chip-btn" data-val="1400000">1 400 000</button>
+            <button type="button" class="chip-btn" data-val="1800000">1 800 000</button>
+            <button type="button" class="chip-btn" data-val="2000000">2 000 000</button>
+          </div>
+        </div>
+
+        <!-- Kvitansiya rasmini yuklash -->
+        <div class="form-group">
+          <label class="form-label">To'lov kvitansiyasi (Chek):</label>
+
+          <!-- Yuklash maydoni -->
+          <div class="upload-zone" id="uploadZone">
+            <div class="upload-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+            </div>
+            <div>
+              <div class="upload-text-title">Kvitansiya rasmini yuklang</div>
+              <div class="upload-text-sub">Kamera yoki Galereyadan (JPG, PNG, WebP)</div>
+            </div>
+            <input type="file" id="receiptFileInput" class="file-hidden-input" accept="image/*">
+          </div>
+
+          <!-- Rasm ko'rinishi (Preview) -->
+          <div class="preview-box" id="previewBox">
+            <img id="previewImage" class="preview-thumbnail" src="" alt="Chek">
+            <div class="preview-info">
+              <div class="preview-name" id="previewFileName">chek.jpg</div>
+              <div class="preview-size" id="previewFileSize">0 KB</div>
+            </div>
+            <button type="button" class="preview-remove-btn" id="removeFileBtn" title="O'chirish">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Chekni yuborish tugmasi -->
+        <button type="button" class="submit-btn" id="submitPaymentBtn">
+          <div class="spinner" id="btnSpinner"></div>
+          <span id="btnText">Chekni yuborish</span>
+        </button>
+      </section>
+
+    </main>
+
+    <!-- ==================== 4-BOSQICH: NATIJA / MUOFFAQIYAT EKRANI ==================== -->
+    <section class="result-screen" id="resultScreen">
+      <div class="success-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+      <h2 class="result-title">To'lov cheki qabul qilindi!</h2>
+      <p class="result-desc">
+        Kvitansiyangiz tizimga muvaffaqiyatli yuklandi va ma'muriyat tekshiruviga yuborildi.
+      </p>
+
+      <div class="receipt-summary-box">
+        <div class="summary-row">
+          <span class="label">Talaba:</span>
+          <span class="val" id="resStudentName">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Talaba ID:</span>
+          <span class="val" id="resStudentId">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Qabul qilingan summa:</span>
+          <span class="val" id="resAmount">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Sana va vaqt:</span>
+          <span class="val" id="resDate">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Holat:</span>
+          <span class="val" style="color: var(--success);">Tekshirilmoqda</span>
+        </div>
+      </div>
+
+      <button type="button" class="close-btn" id="closeAppBtn">Ilovani yopish</button>
+    </section>
+
+  </div>
+
+  <!-- ==========================================================================
+       JAVASCRIPT DASTURI (LOGIKA VA INTEGRATSIYA)
+       ========================================================================== -->
+  <script>
+    /**
+     * ========================================================================
+     * SOZLAMALAR (CONFIGURATION)
+     * ========================================================================
+     * Deploy qilingan Google Apps Script Web App URL manzilini shu yerga yozing.
+     * Misol: "https://script.google.com/macros/s/AKfycbx.../exec"
+     * Bo'sh bo'lsa yoki ulanmasa, Mini App demo ma'lumotlar bilan ishlaydi.
+     */
+    const BACKEND_URL = "https://script.google.com/macros/s/AKfycbzF04Z0HshpeGKgXSae8aZYcvaKkybh_TT679NZhyq_Ues-d0zq_VhdURb59YW-FIMe/exec";
+
+    // Telegram WebApp API
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      if (tg.enableClosingConfirmation) tg.enableClosingConfirmation();
+      if (tg.setHeaderColor) tg.setHeaderColor('#FFFFFF');
+      if (tg.setBackgroundColor) tg.setBackgroundColor('#F8FAFC');
+    }
+
+    // Haptic feedback yordamchisi (tebranish effekti)
+    function triggerHaptic(type = 'light') {
+      try {
+        if (tg && tg.HapticFeedback) {
+          if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
+          else if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
+          else tg.HapticFeedback.impactOccurred(type);
+        }
+      } catch (e) { }
+    }
+
+    // Global holat (State)
+    let allStudents = [];
+    let selectedStudent = null;
+    let compressedImageBase64 = null;
+    let selectedFileMeta = null;
+
+    // DOM Elementlari
+    const initialLoader = document.getElementById('initialLoader');
+    const mainFlow = document.getElementById('mainFlow');
+    const alertBanner = document.getElementById('alertBanner');
+
+    const facultySelect = document.getElementById('facultySelect');
+    const groupSelect = document.getElementById('groupSelect');
+    const studentSearchInput = document.getElementById('studentSearchInput');
+    const studentsDropdownList = document.getElementById('studentsDropdownList');
+
+    const studentDetailCard = document.getElementById('studentDetailCard');
+    const cardFullName = document.getElementById('cardFullName');
+    const cardStudentId = document.getElementById('cardStudentId');
+    const cardFaculty = document.getElementById('cardFaculty');
+    const cardGroup = document.getElementById('cardGroup');
+    const cardDorm = document.getElementById('cardDorm');
+    const cardRoom = document.getElementById('cardRoom');
+    const cardStatusBadge = document.getElementById('cardStatusBadge');
+    const resetStudentBtn = document.getElementById('resetStudentBtn');
+
+    const paymentFormCard = document.getElementById('paymentFormCard');
+    const amountInput = document.getElementById('amountInput');
+    const uploadZone = document.getElementById('uploadZone');
+    const receiptFileInput = document.getElementById('receiptFileInput');
+    const previewBox = document.getElementById('previewBox');
+    const previewImage = document.getElementById('previewImage');
+    const previewFileName = document.getElementById('previewFileName');
+    const previewFileSize = document.getElementById('previewFileSize');
+    const removeFileBtn = document.getElementById('removeFileBtn');
+
+    const submitPaymentBtn = document.getElementById('submitPaymentBtn');
+    const btnSpinner = document.getElementById('btnSpinner');
+    const btnText = document.getElementById('btnText');
+
+    const resultScreen = document.getElementById('resultScreen');
+    const resStudentName = document.getElementById('resStudentName');
+    const resStudentId = document.getElementById('resStudentId');
+    const resAmount = document.getElementById('resAmount');
+    const resDate = document.getElementById('resDate');
+    const closeAppBtn = document.getElementById('closeAppBtn');
+
+    /**
+     * ========================================================================
+     * 1. TALABALARNI YUKLASH (FETCH STUDENTS)
+     * ========================================================================
+     */
+    async function initApp() {
+      showAlert('', false);
+
+      // Agar Backend URL qo'yilmagan bo'lsa demo rejim
+      if (!BACKEND_URL || BACKEND_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
+        console.warn("Backend URL sozlanmagan. Demo talabalar ro'yxati yuklanmoqda.");
+        showAlert("Eslatma: Demo rejimida ishlamoqda. Google Apps Script Web App URL ulanmagan.", true, "warning");
+        allStudents = getDemoStudents();
+        renderFaculties();
+        initialLoader.style.display = 'none';
+        mainFlow.style.display = 'flex';
+        return;
+      }
+
+      try {
+        initialLoader.style.display = 'flex';
+        const response = await fetch(`${BACKEND_URL}?action=getStudents`, {
+          method: 'GET',
+          cache: 'no-cache'
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server javob bermadi: HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.success && Array.isArray(data.students)) {
+          allStudents = data.students;
+          renderFaculties();
+        } else {
+          throw new Error(data.error || "Ma'lumotlar olinmadi");
+        }
+      } catch (err) {
+        console.error("Xatolik:", err);
+        showAlert("Serverdan talabalar ro'yxatini yuklab bo'lmadi. Demo rejim yoqildi.", true, "warning");
+        allStudents = getDemoStudents();
+        renderFaculties();
+      } finally {
+        initialLoader.style.display = 'none';
+        mainFlow.style.display = 'flex';
+      }
+    }
+
+    /**
+     * ========================================================================
+     * 2. KASKADLI FILTR LOGIKASI
+     * ========================================================================
+     */
+    // Fakultetlarni unikal ro'yxatini chiqarish
+    function renderFaculties() {
+      const faculties = [...new Set(allStudents.map(s => s.faculty))].filter(Boolean).sort();
+      facultySelect.innerHTML = '<option value="">-- Fakultetni tanlang --</option>';
+      faculties.forEach(fac => {
+        const opt = document.createElement('option');
+        opt.value = fac;
+        opt.textContent = fac;
+        facultySelect.appendChild(opt);
+      });
+    }
+
+    // Fakultet tanlanganda
+    facultySelect.addEventListener('change', () => {
+      triggerHaptic('light');
+      const selectedFac = facultySelect.value;
+      groupSelect.innerHTML = '<option value="">-- Guruhni tanlang --</option>';
+      studentSearchInput.value = '';
+      studentSearchInput.disabled = true;
+      studentsDropdownList.classList.remove('show');
+      deselectStudent();
+
+      if (!selectedFac) {
+        groupSelect.disabled = true;
+        return;
+      }
+
+      // Fakultetga tegishli guruhlarni olish
+      const groups = [...new Set(allStudents.filter(s => s.faculty === selectedFac).map(s => s.group))].filter(Boolean).sort();
+      groups.forEach(grp => {
+        const opt = document.createElement('option');
+        opt.value = grp;
+        opt.textContent = grp;
+        groupSelect.appendChild(opt);
+      });
+
+      groupSelect.disabled = false;
+    });
+
+    // Guruh tanlanganda
+    groupSelect.addEventListener('change', () => {
+      triggerHaptic('light');
+      const selectedGrp = groupSelect.value;
+      studentSearchInput.value = '';
+      deselectStudent();
+
+      if (!selectedGrp) {
+        studentSearchInput.disabled = true;
+        studentsDropdownList.classList.remove('show');
+        return;
+      }
+
+      studentSearchInput.disabled = false;
+      studentSearchInput.focus();
+      filterAndShowStudents("");
+    });
+
+    // Ism bo'yicha qidiruv maydoni
+    studentSearchInput.addEventListener('focus', () => {
+      filterAndShowStudents(studentSearchInput.value.trim());
+    });
+
+    studentSearchInput.addEventListener('input', (e) => {
+      filterAndShowStudents(e.target.value.trim());
+    });
+
+    function filterAndShowStudents(searchQuery) {
+      const fac = facultySelect.value;
+      const grp = groupSelect.value;
+
+      if (!fac || !grp) return;
+
+      const groupStudents = allStudents.filter(s => s.faculty === fac && s.group === grp);
+      const query = searchQuery.toLowerCase();
+
+      const matched = groupStudents.filter(s => {
+        return s.fullName.toLowerCase().includes(query) ||
+          (s.id && s.id.toLowerCase().includes(query));
+      });
+
+      renderDropdownStudents(matched);
+    }
+
+    function renderDropdownStudents(students) {
+      studentsDropdownList.innerHTML = '';
+      if (students.length === 0) {
+        studentsDropdownList.innerHTML = '<div class="empty-list-msg">Talaba topilmadi</div>';
+      } else {
+        students.forEach(st => {
+          const item = document.createElement('div');
+          item.className = 'student-item';
+          item.innerHTML = `
+            <div class="student-item-name">${escapeHtml(st.fullName)}</div>
+            <div class="student-item-sub">Xona: ${escapeHtml(st.dorm)}, ${escapeHtml(st.room)}-xona (ID: ${escapeHtml(st.id)})</div>
+          `;
+          item.addEventListener('click', () => {
+            selectStudent(st);
+          });
+          studentsDropdownList.appendChild(item);
+        });
+      }
+      studentsDropdownList.classList.add('show');
+    }
+
+    // Talabani tanlash
+    function selectStudent(student) {
+      triggerHaptic('medium');
+      selectedStudent = student;
+      studentSearchInput.value = student.fullName;
+      studentsDropdownList.classList.remove('show');
+
+      // Kartochka ma'lumotlarini to'ldirish
+      cardFullName.textContent = student.fullName;
+      cardStudentId.textContent = `ID: ${student.id}`;
+      cardFaculty.textContent = student.faculty;
+      cardGroup.textContent = student.group;
+      cardDorm.textContent = student.dorm;
+      cardRoom.textContent = student.room;
+
+      // Status badge
+      const statusText = (student.status || "To'lanmagan").trim();
+      cardStatusBadge.className = 'status-badge';
+      if (statusText.toLowerCase() === "to'langan") {
+        cardStatusBadge.classList.add('paid');
+        cardStatusBadge.innerHTML = '✅ To\'langan' + (student.amount ? ` (${formatNumber(student.amount)} so'm)` : '');
+      } else if (statusText.toLowerCase().includes("tekshir")) {
+        cardStatusBadge.classList.add('pending');
+        cardStatusBadge.innerHTML = '🔄 Tekshirilmoqda';
+      } else {
+        cardStatusBadge.classList.add('unpaid');
+        cardStatusBadge.innerHTML = '⏳ To\'lanmagan';
+      }
+
+      // Kartochka va To'lov formasini ko'rsatish
+      studentDetailCard.style.display = 'block';
+      paymentFormCard.style.display = 'flex';
+
+      // Pastki to'lov maydoniga silliq skroll qilish
+      paymentFormCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Talabani bekor qilish (Reset)
+    function deselectStudent() {
+      selectedStudent = null;
+      studentDetailCard.style.display = 'none';
+      paymentFormCard.style.display = 'none';
+      clearFileInput();
+    }
+
+    resetStudentBtn.addEventListener('click', () => {
+      triggerHaptic('light');
+      deselectStudent();
+      studentSearchInput.value = '';
+      studentSearchInput.focus();
+      filterAndShowStudents('');
+    });
+
+    // Ekranning boshqa joyi bosilganda dropdown ro'yxatni yopish
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.search-input-box') && !e.target.closest('#studentsDropdownList')) {
+        studentsDropdownList.classList.remove('show');
+      }
+    });
+
+    /**
+     * ========================================================================
+     * 3. TO'LOV SUMMASI FORMATLASH VA TEZKOR CHIPLAR
+     * ========================================================================
+     */
+    amountInput.addEventListener('input', (e) => {
+      let raw = e.target.value.replace(/\D/g, ''); // Faqat raqamlar
+      if (raw) {
+        e.target.value = formatNumber(parseInt(raw, 10));
+      } else {
+        e.target.value = '';
+      }
+    });
+
+    document.querySelectorAll('.chip-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        triggerHaptic('light');
+        const val = btn.getAttribute('data-val');
+        amountInput.value = formatNumber(parseInt(val, 10));
+      });
+    });
+
+    function getEnteredAmount() {
+      const raw = amountInput.value.replace(/\s+/g, '');
+      return parseInt(raw, 10) || 0;
+    }
+
+    /**
+     * ========================================================================
+     * 4. FAYL YUKLASH VA CANVAS ORQALI SIQISH (COMPRESSION)
+     * ========================================================================
+     */
+    receiptFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      triggerHaptic('light');
+
+      // Fayl turi tekshiruvi
+      if (!file.type.startsWith('image/')) {
+        showAlert("Faqat rasm fayllari (JPG, PNG, WebP) qabul qilinadi!", true, "error");
+        clearFileInput();
+        return;
+      }
+
+      try {
+        showAlert("Rasm optimallashtirilmoqda...", true, "warning");
+        const compressed = await compressImage(file, 1600, 0.82);
+        compressedImageBase64 = compressed.base64;
+        selectedFileMeta = {
+          name: file.name,
+          type: "image/jpeg",
+          originalSize: file.size,
+          compressedSize: compressed.size
+        };
+
+        // Preview ko'rsatish
+        previewImage.src = compressed.base64;
+        previewFileName.textContent = file.name;
+        previewFileSize.textContent = `${formatBytes(compressed.size)} (Sifat saqlandi)`;
+        uploadZone.style.display = 'none';
+        previewBox.style.display = 'flex';
+        showAlert('', false);
+      } catch (err) {
+        console.error("Rasm siqishda xatolik:", err);
+        showAlert("Rasmni qayta ishlashda xatolik yuz berdi. Boshqa rasm tanlang.", true, "error");
+        clearFileInput();
+      }
+    });
+
+    removeFileBtn.addEventListener('click', () => {
+      triggerHaptic('light');
+      clearFileInput();
+    });
+
+    function clearFileInput() {
+      receiptFileInput.value = '';
+      compressedImageBase64 = null;
+      selectedFileMeta = null;
+      previewBox.style.display = 'none';
+      uploadZone.style.display = 'flex';
+    }
+
+    // HTML5 Canvas orqali rasmni mijoz tomonda sifatli siqish
+    function compressImage(file, maxWidth = 1600, quality = 0.82) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target.result;
+          img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const base64 = canvas.toDataURL('image/jpeg', quality);
+            const byteString = atob(base64.split(',')[1]);
+            resolve({
+              base64: base64,
+              size: byteString.length
+            });
+          };
+          img.onerror = reject;
+        };
+        reader.onerror = reject;
+      });
+    }
+
+    /**
+     * ========================================================================
+     * 5. CHEKNI YUBORISH (SUBMIT TO APPS SCRIPT)
+     * ========================================================================
+     */
+    submitPaymentBtn.addEventListener('click', async () => {
+      if (!selectedStudent) {
+        showAlert("Iltimos, avval ro'yxatdan o'zingizni tanlang!", true, "error");
+        triggerHaptic('error');
+        return;
+      }
+
+      const amount = getEnteredAmount();
+      if (!amount || amount <= 0) {
+        showAlert("Iltimos, to'langan summani to'g'ri kiriting!", true, "error");
+        amountInput.focus();
+        triggerHaptic('error');
+        return;
+      }
+
+      if (!compressedImageBase64) {
+        showAlert("Iltimos, kvitansiya cheki rasmini yuklang!", true, "error");
+        triggerHaptic('error');
+        return;
+      }
+
+      // Tasdiqlash
+      showAlert('', false);
+      setSubmittingState(true);
+      triggerHaptic('medium');
+
+      // Telegram foydalanuvchi ma'lumotlari
+      const tgUser = tg?.initDataUnsafe?.user || {};
+
+      const payload = {
+        studentId: selectedStudent.id,
+        amount: amount,
+        imageBase64: compressedImageBase64,
+        mimeType: "image/jpeg",
+        fileName: selectedFileMeta?.name || "kvitansiya.jpg",
+        telegramUser: {
+          id: tgUser.id || "",
+          username: tgUser.username || "",
+          first_name: tgUser.first_name || "",
+          last_name: tgUser.last_name || ""
+        }
+      };
+
+      // Agar Demo rejim bo'lsa simulyatsiya
+      if (!BACKEND_URL || BACKEND_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
+        setTimeout(() => {
+          showSuccessScreen({
+            studentName: selectedStudent.fullName,
+            studentId: selectedStudent.id,
+            amount: amount,
+            date: new Date().toLocaleString('uz-UZ')
+          });
+        }, 1200);
+        return;
+      }
+
+      try {
+        const response = await fetch(BACKEND_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8' // Apps Script CORS cheklovlarini aylanib o'tish uchun text/plain
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          triggerHaptic('success');
+          showSuccessScreen({
+            studentName: selectedStudent.fullName,
+            studentId: selectedStudent.id,
+            amount: amount,
+            date: result.data?.date || new Date().toLocaleString('uz-UZ')
+          });
+        } else {
+          throw new Error(result.error || "Server chekni qabul qilmadi.");
+        }
+      } catch (err) {
+        console.error("Yuborishda xatolik:", err);
+        triggerHaptic('error');
+        setSubmittingState(false);
+        showAlert(`Xatolik: ${err.message || "Internet aloqasini tekshirib qayta urinib ko'ring."}`, true, "error");
+      }
+    });
+
+    function setSubmittingState(isSubmitting) {
+      if (isSubmitting) {
+        submitPaymentBtn.disabled = true;
+        btnSpinner.style.display = 'inline-block';
+        btnText.textContent = "Chek yuborilmoqda...";
+        amountInput.disabled = true;
+        receiptFileInput.disabled = true;
+        removeFileBtn.disabled = true;
+      } else {
+        submitPaymentBtn.disabled = false;
+        btnSpinner.style.display = 'none';
+        btnText.textContent = "Chekni yuborish";
+        amountInput.disabled = false;
+        receiptFileInput.disabled = false;
+        removeFileBtn.disabled = false;
+      }
+    }
+
+    /**
+     * ========================================================================
+     * 6. NATIJA EKRANI VA ILOVANI YOPISH
+     * ========================================================================
+     */
+    function showSuccessScreen(info) {
+      mainFlow.style.display = 'none';
+      resultScreen.style.display = 'block';
+
+      resStudentName.textContent = info.studentName;
+      resStudentId.textContent = info.studentId;
+      resAmount.textContent = `${formatNumber(info.amount)} so'm`;
+      resDate.textContent = info.date;
+
+      triggerHaptic('success');
+
+      // 4 soniyadan so'ng avtomatik Telegram oynasini yopish (foydalanuvchi qulayligi)
+      setTimeout(() => {
+        if (tg && tg.close) {
+          try { tg.close(); } catch (e) { }
+        }
+      }, 5000);
+    }
+
+    closeAppBtn.addEventListener('click', () => {
+      triggerHaptic('light');
+      if (tg && tg.close) {
+        tg.close();
+      } else {
+        window.close();
+      }
+    });
+
+    /**
+     * ========================================================================
+     * 7. YORDAMCHI FUNKSIYALAR (HELPERS)
+     * ========================================================================
+     */
+    function formatNumber(num) {
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    }
+
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    function showAlert(msg, show, type = 'error') {
+      if (!show) {
+        alertBanner.style.display = 'none';
+        return;
+      }
+      alertBanner.textContent = msg;
+      alertBanner.className = `alert-banner ${type}`;
+      alertBanner.style.display = 'flex';
+    }
+
+    function escapeHtml(string) {
+      return String(string || '').replace(/[&<>"']/g, function (m) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }[m];
+      });
+    }
+
+    // Namunaviy test talabalar ro'yxati (Offline / Demo rejim uchun)
+    function getDemoStudents() {
+      return [
+        { id: "ST-1001", faculty: "Dasturiy injiniring", group: "DI-21-01", fullName: "Karimov Alisher Baxtiyor o'g'li", dorm: "1-yotoqxona", room: "204", status: "To'lanmagan", amount: 0 },
+        { id: "ST-1002", faculty: "Dasturiy injiniring", group: "DI-21-01", fullName: "Toshmatova Zilola Farhod qizi", dorm: "1-yotoqxona", room: "205", status: "To'lanmagan", amount: 0 },
+        { id: "ST-1003", faculty: "Dasturiy injiniring", group: "DI-21-02", fullName: "Rustamov Jasur Jamshid o'g'li", dorm: "1-yotoqxona", room: "206", status: "To'langan", amount: 1800000 },
+        { id: "ST-1004", faculty: "Dasturiy injiniring", group: "DI-21-02", fullName: "Abdullayeva Shahnoza Akmal qizi", dorm: "1-yotoqxona", room: "207", status: "To'lanmagan", amount: 0 },
+        { id: "ST-1005", faculty: "Kompyuter injiniringi", group: "KI-22-01", fullName: "Xoliqov Bobur Dilshod o'g'li", dorm: "2-yotoqxona", room: "310", status: "To'lanmagan", amount: 0 },
+        { id: "ST-1006", faculty: "Kompyuter injiniringi", group: "KI-22-01", fullName: "Ismoilova Madina Sanjar qizi", dorm: "2-yotoqxona", room: "311", status: "To'lanmagan", amount: 0 },
+        { id: "ST-1007", faculty: "Kompyuter injiniringi", group: "KI-22-02", fullName: "Ergashev Sardor Ulug'bek o'g'li", dorm: "2-yotoqxona", room: "312", status: "To'lanmagan", amount: 0 },
+        { id: "ST-1008", faculty: "Sun'iy intellekt", group: "SI-23-01", fullName: "Nazarov Otabek Sherzod o'g'li", dorm: "3-yotoqxona", room: "105", status: "To'lanmagan", amount: 0 },
+        { id: "ST-1009", faculty: "Sun'iy intellekt", group: "SI-23-01", fullName: "Qodirova Sevara Mahmud qizi", dorm: "3-yotoqxona", room: "106", status: "To'lanmagan", amount: 0 },
+        { id: "ST-1010", faculty: "Kiberxavfsizlik", group: "KX-22-01", fullName: "Rahimov Bekzod Tohir o'g'li", dorm: "3-yotoqxona", room: "214", status: "To'lanmagan", amount: 0 },
+        { id: "ST-1011", faculty: "Kiberxavfsizlik", group: "KX-22-01", fullName: "Yo'ldoshev Diyor Rustam o'g'li", dorm: "3-yotoqxona", room: "215", status: "To'lanmagan", amount: 0 },
+        { id: "ST-1012", faculty: "Iqtisodiyot va moliya", group: "IM-21-03", fullName: "Mirzayev Javohir Botir o'g'li", dorm: "4-yotoqxona", room: "401", status: "To'lanmagan", amount: 0 },
+        { id: "ST-1013", faculty: "Iqtisodiyot va moliya", group: "IM-21-03", fullName: "Hasanova Nilufar Shuhrat qizi", dorm: "4-yotoqxona", room: "402", status: "To'langan", amount: 1800000 }
+      ];
+    }
+
+    // Ilovani ishga tushirish
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+
+</html>
