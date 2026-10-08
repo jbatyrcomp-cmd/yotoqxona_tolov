@@ -20,10 +20,12 @@ Birinchi qator (sarlavhalar) quyidagi tartibda bo'lishi lozim:
 | **E** | `Yotoqxona` | Masalan: `1-yotoqxona` |
 | **F** | `Xona` | Masalan: `204` |
 | **G** | `Holat` | `To'lanmagan`, `Tekshiruvda` yoki `To'langan` |
-| **H** | `Summa` | To'langan summa (masalan: `1800000`) |
-| **I** | `Kvitansiya havolasi` | Drive-dagi chek rasmiga avtomatik havola |
-| **J** | `Sana vaqti` | To'lov yuborilgan sana va vaqt |
-| **K** | `Telegram foydalanuvchi` | Masalan: `@alisher (ID: 12345678)` |
+| **H** | `Jami to'lov` | Belgilangan to'lov (masalan: `1800000`) |
+| **I** | `To'langan summa` | To'langan summa (masalan: `0` yoki `1800000`) |
+| **J** | `Qarzdorlik` | Qoldiq qarz, formula: `=H2-I2` |
+| **K** | `Kvitansiya havolasi` | Drive-dagi chek rasmiga avtomatik havola |
+| **L** | `Sana vaqti` | To'lov yuborilgan sana va vaqt |
+| **M** | `Telegram foydalanuvchi` | Masalan: `@alisher (ID: 12345678)` |
 
 > **Maslahat:** Papkadagi `sample_students.csv` faylini Google Sheets-ga to'g'ridan-to'g'ri yuklab olib (`File -> Import`), ustiga o'z talabalaringiz ro'yxatini joylashingiz mumkin.
 

@@ -430,7 +430,8 @@ function setupInitialSheets() {
 
   const studentHeaders = [
     "ID", "Fakultet", "Guruh", "F.I.Sh.", "Yotoqxona",
-    "Xona", "Holat", "Summa", "Kvitansiya havolasi", "Sana vaqti", "Telegram foydalanuvchi"
+    "Xona", "Holat", "Jami to'lov", "To'langan summa", "Qarzdorlik",
+    "Kvitansiya havolasi", "Sana vaqti", "Telegram foydalanuvchi"
   ];
 
   if (studentsSheet.getLastRow() === 0) {
@@ -440,15 +441,15 @@ function setupInitialSheets() {
     // Namunaviy 3 ta talaba
     studentsSheet.appendRow([
       "ST-1001", "Dasturiy injiniring", "DI-21-01", "Karimov Alisher Baxtiyor o'g'li",
-      "1-yotoqxona", "204", "To'lanmagan", "", "", "", ""
+      "1-yotoqxona", "204", "To'lanmagan", 1800000, 0, "=H2-I2", "", "", ""
     ]);
     studentsSheet.appendRow([
       "ST-1002", "Dasturiy injiniring", "DI-21-01", "Toshmatova Zilola Farhod qizi",
-      "1-yotoqxona", "205", "To'lanmagan", "", "", "", ""
+      "1-yotoqxona", "205", "To'lanmagan", 1800000, 0, "=H3-I3", "", "", ""
     ]);
     studentsSheet.appendRow([
       "ST-1003", "Kompyuter injiniringi", "KI-22-01", "Rustamov Jasur Jamshid o'g'li",
-      "2-yotoqxona", "310", "To'langan", 1800000, "https://drive.google.com", "2026-10-01 12:00:00", "@jasur"
+      "2-yotoqxona", "310", "To'langan", 1800000, 1800000, "=H4-I4", "https://drive.google.com", "2026-10-01 12:00:00", "@jasur"
     ]);
   }
 
@@ -484,4 +485,73 @@ function styleHeaderRow(sheet) {
   headerRange.setFontFamily("Arial");
   headerRange.setHorizontalAlignment("center");
   sheet.setFrozenRows(1);
+}
+
+/**
+ * ============================================================================
+ * JADVAL USTUNLARINI AVTOMATIK TARTIBGA KELTIRISH FUNKSIYASI
+ * ============================================================================
+ * Ushbu funksiyani Apps Script-da bir marta 'Run' qilsangiz, mavjud jadvalingizni:
+ * [Jami to'lov] -> [To'langan summa] -> [Qarzdorlik]
+ * ketma-ketligida to'g'irlab, barcha qatorlarga formulalarni avtomatik joylaydi!
+ */
+function updateStudentSheetColumns() {
+  const ss = getSpreadsheet();
+  const sheet = ss.getSheetByName(CONFIG.STUDENTS_SHEET_NAME);
+  if (!sheet) throw new Error(`'${CONFIG.STUDENTS_SHEET_NAME}' varag'i topilmadi.`);
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return;
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h).trim().toLowerCase());
+
+  const colId = findColumnIndex(headers, ["id", "talaba id"]);
+  const colFaculty = findColumnIndex(headers, ["fakultet"]);
+  const colGroup = findColumnIndex(headers, ["guruh"]);
+  const colName = findColumnIndex(headers, ["f.i.sh.", "f.i.sh", "fish", "ism"]);
+  const colDorm = findColumnIndex(headers, ["yotoqxona"]);
+  const colRoom = findColumnIndex(headers, ["xona"]);
+  const colStatus = findColumnIndex(headers, ["holat"]);
+  const colTotalFee = findColumnIndex(headers, ["jami to'lov", "shartnoma"]);
+  const colAmount = findColumnIndex(headers, ["to'langan summa", "summa"]);
+  const colDebt = findColumnIndex(headers, ["qarzdorlik"]);
+  const colReceipt = findColumnIndex(headers, ["kvitansiya", "kvitansiya havolasi"]);
+  const colDate = findColumnIndex(headers, ["sana vaqti", "sana"]);
+  const colTg = findColumnIndex(headers, ["telegram foydalanuvchi", "telegram"]);
+
+  const newRows = [];
+  const targetHeaders = [
+    "ID", "Fakultet", "Guruh", "F.I.Sh.", "Yotoqxona",
+    "Xona", "Holat", "Jami to'lov", "To'langan summa", "Qarzdorlik",
+    "Kvitansiya havolasi", "Sana vaqti", "Telegram foydalanuvchi"
+  ];
+  newRows.push(targetHeaders);
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const totalFee = (colTotalFee !== -1 && row[colTotalFee] !== "" && !isNaN(row[colTotalFee])) ? Number(row[colTotalFee]) : 1800000;
+    const paid = (colAmount !== -1 && row[colAmount] !== "" && !isNaN(row[colAmount])) ? Number(row[colAmount]) : 0;
+    const rowNum = i + 1;
+
+    newRows.push([
+      colId !== -1 ? row[colId] : `ST-${i}`,
+      colFaculty !== -1 ? row[colFaculty] : "",
+      colGroup !== -1 ? row[colGroup] : "",
+      colName !== -1 ? row[colName] : "",
+      colDorm !== -1 ? row[colDorm] : "",
+      colRoom !== -1 ? row[colRoom] : "",
+      colStatus !== -1 && row[colStatus] ? row[colStatus] : "To'lanmagan",
+      totalFee,
+      paid,
+      `=H${rowNum}-I${rowNum}`, // Qarzdorlik formulasi: Jami to'lov - To'langan summa
+      colReceipt !== -1 ? row[colReceipt] : "",
+      colDate !== -1 ? row[colDate] : "",
+      colTg !== -1 ? row[colTg] : ""
+    ]);
+  }
+
+  sheet.getRange(1, 1, newRows.length, targetHeaders.length).setValues(newRows);
+  styleHeaderRow(sheet);
+  SpreadsheetApp.flush();
 }
