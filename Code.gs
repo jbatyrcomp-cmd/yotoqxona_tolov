@@ -210,15 +210,31 @@ function doPost(e) {
 
     const receiptUrl = driveFile.getUrl();
 
-    // 4. "Talabalar" jadvalidagi qatorni yangilash
+    // 4. "Talabalar" jadvalidagi qatorni yangilash (Bo'lib to'lash / Kumulyativ hisoblash)
+    const currentPayment = Number(amount);
+    const prevAmountRaw = (colAmount !== -1 && studentRowData[colAmount] !== "") ? studentRowData[colAmount] : 0;
+    const prevPaid = (!isNaN(prevAmountRaw)) ? Number(prevAmountRaw) : 0;
+    const newTotalPaid = prevPaid + currentPayment;
+
+    // Jami to'lov (shartnoma) va yangi qarzdorlikni aniqlash
+    const totalFeeVal = (colTotalFee !== -1 && !isNaN(studentRowData[colTotalFee]) && studentRowData[colTotalFee] !== "")
+      ? Number(studentRowData[colTotalFee])
+      : 1800000;
+    const newDebt = Math.max(0, totalFeeVal - newTotalPaid);
+
+    // Holatni aniqlash: To'liq to'langanmi yoki Qisman to'langanmi
+    let statusText = (newDebt <= 0) ? "To'langan" : "Qisman to'langan";
+
     if (colStatus !== -1) {
-      studentsSheet.getRange(studentRowIndex, colStatus + 1).setValue(CONFIG.PAYMENT_STATUS_ON_SUBMIT);
+      studentsSheet.getRange(studentRowIndex, colStatus + 1).setValue(statusText);
     }
     if (colAmount !== -1) {
-      studentsSheet.getRange(studentRowIndex, colAmount + 1).setValue(Number(amount));
+      studentsSheet.getRange(studentRowIndex, colAmount + 1).setValue(newTotalPaid);
     }
     if (colReceipt !== -1) {
-      studentsSheet.getRange(studentRowIndex, colReceipt + 1).setValue(receiptUrl);
+      const prevReceipt = (studentRowData[colReceipt]) ? String(studentRowData[colReceipt]).trim() : "";
+      const combinedReceipts = prevReceipt ? `${prevReceipt}\n${receiptUrl}` : receiptUrl;
+      studentsSheet.getRange(studentRowIndex, colReceipt + 1).setValue(combinedReceipts);
     }
     if (colDate !== -1) {
       studentsSheet.getRange(studentRowIndex, colDate + 1).setValue(displayDate);
@@ -232,10 +248,6 @@ function doPost(e) {
     if (colDebt !== -1) {
       const debtCell = studentsSheet.getRange(studentRowIndex, colDebt + 1);
       if (!debtCell.getFormula()) {
-        const totalFeeVal = (colTotalFee !== -1 && !isNaN(studentRowData[colTotalFee]) && studentRowData[colTotalFee] !== "")
-          ? Number(studentRowData[colTotalFee])
-          : 1800000;
-        const newDebt = Math.max(0, totalFeeVal - Number(amount));
         debtCell.setValue(newDebt);
       }
     }
@@ -253,6 +265,7 @@ function doPost(e) {
     }
 
     const transactionId = "TRX-" + Utilities.formatDate(now, CONFIG.TIMEZONE, "yyyyMMddHHmmss") + "-" + Math.floor(Math.random() * 900 + 100);
+    const trxStatus = (newDebt <= 0) ? "To'liq to'lov" : `Qisman to'lov (Qoldiq: ${newDebt})`;
     paymentsSheet.appendRow([
       transactionId,
       displayDate,
@@ -260,20 +273,24 @@ function doPost(e) {
       studentFullName,
       studentFaculty,
       studentGroup,
-      Number(amount),
+      currentPayment,
       receiptUrl,
-      CONFIG.PAYMENT_STATUS_ON_SUBMIT,
+      trxStatus,
       formatTelegramUser(telegramUser)
     ]);
 
     // Muvaffaqiyatli natija
     return createJsonResponse({
       success: true,
-      message: "To'lov chekingiz muvaffaqiyatli qabul qilindi va tekshiruvga yuborildi.",
+      message: newDebt <= 0 ? "To'lov to'liq qabul qilindi!" : `To'lov qabul qilindi. Qoldiq qarzdorlik: ${newDebt} so'm`,
       data: {
         studentId: studentId,
         studentName: studentFullName,
-        amount: Number(amount),
+        amount: currentPayment,
+        totalPaid: newTotalPaid,
+        totalFee: totalFeeVal,
+        remainingDebt: newDebt,
+        status: statusText,
         receiptUrl: receiptUrl,
         date: displayDate,
         transactionId: transactionId

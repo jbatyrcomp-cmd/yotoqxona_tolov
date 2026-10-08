@@ -1019,6 +1019,9 @@
           <span>To'lov ma'lumotlari</span>
         </div>
 
+        <!-- Bo'lib to'lash eslatmasi -->
+        <div id="paymentSplitNote" style="display: none; margin-bottom: 12px; padding: 10px 12px; border-radius: var(--radius-md); font-size: 13px; line-height: 1.4;"></div>
+
         <!-- To'langan summa -->
         <div class="form-group">
           <label class="form-label" for="amountInput">To'langan summa:</label>
@@ -1105,8 +1108,16 @@
           <span class="val" id="resStudentId">-</span>
         </div>
         <div class="summary-row">
-          <span class="label">Qabul qilingan summa:</span>
+          <span class="label">Ushbu to'lov:</span>
           <span class="val" id="resAmount">-</span>
+        </div>
+        <div class="summary-row" id="resTotalPaidRow">
+          <span class="label">Jami to'langan:</span>
+          <span class="val" id="resTotalPaid">-</span>
+        </div>
+        <div class="summary-row" id="resDebtRow">
+          <span class="label">Qoldiq qarzdorlik:</span>
+          <span class="val" id="resRemainingDebt" style="font-weight: 700;">-</span>
         </div>
         <div class="summary-row">
           <span class="label">Sana va vaqt:</span>
@@ -1114,7 +1125,7 @@
         </div>
         <div class="summary-row">
           <span class="label">Holat:</span>
-          <span class="val" style="color: var(--success);">Tekshirilmoqda</span>
+          <span class="val" id="resStatus" style="color: var(--success);">Qabul qilindi</span>
         </div>
       </div>
 
@@ -1391,6 +1402,9 @@
       if (statusText.toLowerCase() === "to'langan") {
         cardStatusBadge.classList.add('paid');
         cardStatusBadge.innerHTML = '✅ To\'langan' + (student.amount ? ` (${formatNumber(student.amount)} so'm)` : '');
+      } else if (statusText.toLowerCase().includes("qisman")) {
+        cardStatusBadge.classList.add('pending');
+        cardStatusBadge.innerHTML = '⚠️ Qisman to\'langan' + (student.amount ? ` (${formatNumber(student.amount)} so'm)` : '');
       } else if (statusText.toLowerCase().includes("tekshir")) {
         cardStatusBadge.classList.add('pending');
         cardStatusBadge.innerHTML = '🔄 Tekshirilmoqda';
@@ -1408,17 +1422,34 @@
       const cardDebtLabel = document.getElementById('cardDebtLabel');
       const cardDebtSub = document.getElementById('cardDebtSub');
       const cardDebtBadge = document.getElementById('cardDebtBadge');
+      const paymentSplitNote = document.getElementById('paymentSplitNote');
 
       if (debt <= 0) {
         cardDebtRow.className = 'debt-card-row no-debt';
         cardDebtLabel.textContent = 'Qarzdorlik holati:';
         cardDebtSub.textContent = `To'lov to'liq to'langan (Jami: ${formatNumber(totalFee)} so'm)`;
         cardDebtBadge.textContent = '0 so\'m (Qarz yo\'q)';
+
+        paymentSplitNote.style.display = 'block';
+        paymentSplitNote.style.background = '#ECFDF5';
+        paymentSplitNote.style.border = '1px solid #A7F3D0';
+        paymentSplitNote.style.color = '#065F46';
+        paymentSplitNote.innerHTML = '✅ <b>Qarzdorlik yo\'q:</b> Ushbu talabada to\'lov to\'liq to\'langan. Agar tasdiqlovchi qo\'shimcha chek yubormoqchi bo\'lsangiz, davom etishingiz mumkin.';
       } else {
         cardDebtRow.className = 'debt-card-row has-debt';
         cardDebtLabel.textContent = 'Qarzdorlik summasi:';
-        cardDebtSub.textContent = `Jami to'lov: ${formatNumber(totalFee)} so'm` + (paidAmount > 0 ? ` • To'langan: ${formatNumber(paidAmount)} so'm` : '');
+        cardDebtSub.textContent = `Jami to'lov: ${formatNumber(totalFee)} so'm` + (paidAmount > 0 ? ` • Avval to'langan: ${formatNumber(paidAmount)} so'm` : '');
         cardDebtBadge.textContent = `${formatNumber(debt)} so'm`;
+
+        if (paidAmount > 0) {
+          paymentSplitNote.style.display = 'block';
+          paymentSplitNote.style.background = '#EFF6FF';
+          paymentSplitNote.style.border = '1px solid #BFDBFE';
+          paymentSplitNote.style.color = '#1E3A8A';
+          paymentSplitNote.innerHTML = `ℹ️ <b>Bo'lib to'lash:</b> Siz avval <b>${formatNumber(paidAmount)} so'm</b> to'lagansiz. Qoldiq qarz: <b style="color:#DC2626;">${formatNumber(debt)} so'm</b>. Yangi to'lov chekingiz summasini kiriting.`;
+        } else {
+          paymentSplitNote.style.display = 'none';
+        }
       }
 
       // Kartochka va To'lov formasini ko'rsatish
@@ -1623,10 +1654,18 @@
       // Agar Demo rejim bo'lsa simulyatsiya
       if (!BACKEND_URL || BACKEND_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
         setTimeout(() => {
+          const totalPaidVal = (selectedStudent.amount || 0) + amount;
+          const remainingDebtVal = Math.max(0, (selectedStudent.totalFee || 1800000) - totalPaidVal);
+          selectedStudent.amount = totalPaidVal;
+          selectedStudent.debt = remainingDebtVal;
+          selectedStudent.status = remainingDebtVal <= 0 ? "To'langan" : "Qisman to'langan";
+
           showSuccessScreen({
             studentName: selectedStudent.fullName,
             studentId: selectedStudent.id,
             amount: amount,
+            totalPaid: totalPaidVal,
+            remainingDebt: remainingDebtVal,
             date: new Date().toLocaleString('uz-UZ')
           });
         }, 1200);
@@ -1646,10 +1685,27 @@
 
         if (result.success) {
           triggerHaptic('success');
+          // Global talaba ma'lumotlarini darhol yangilab qo'yamiz
+          const totalPaidVal = result.data?.totalPaid !== undefined ? result.data.totalPaid : ((selectedStudent.amount || 0) + amount);
+          const remainingDebtVal = result.data?.remainingDebt !== undefined ? result.data.remainingDebt : Math.max(0, (selectedStudent.totalFee || 1800000) - totalPaidVal);
+
+          selectedStudent.amount = totalPaidVal;
+          selectedStudent.debt = remainingDebtVal;
+          selectedStudent.status = remainingDebtVal <= 0 ? "To'langan" : "Qisman to'langan";
+
+          const found = allStudents.find(s => s.id === selectedStudent.id);
+          if (found) {
+            found.amount = totalPaidVal;
+            found.debt = remainingDebtVal;
+            found.status = selectedStudent.status;
+          }
+
           showSuccessScreen({
             studentName: selectedStudent.fullName,
             studentId: selectedStudent.id,
             amount: amount,
+            totalPaid: totalPaidVal,
+            remainingDebt: remainingDebtVal,
             date: result.data?.date || new Date().toLocaleString('uz-UZ')
           });
         } else {
@@ -1694,6 +1750,27 @@
       resStudentId.textContent = info.studentId;
       resAmount.textContent = `${formatNumber(info.amount)} so'm`;
       resDate.textContent = info.date;
+
+      const resTotalPaid = document.getElementById('resTotalPaid');
+      const resRemainingDebt = document.getElementById('resRemainingDebt');
+      const resStatus = document.getElementById('resStatus');
+
+      if (info.totalPaid !== undefined) {
+        resTotalPaid.textContent = `${formatNumber(info.totalPaid)} so'm`;
+        resRemainingDebt.textContent = `${formatNumber(info.remainingDebt)} so'm`;
+        if (info.remainingDebt <= 0) {
+          resStatus.textContent = "To'liq to'landi (Qarzsiz)";
+          resStatus.style.color = "var(--success)";
+        } else {
+          resStatus.textContent = "Qisman to'landi";
+          resStatus.style.color = "var(--warning)";
+        }
+      } else {
+        const trRow = document.getElementById('resTotalPaidRow');
+        const drRow = document.getElementById('resDebtRow');
+        if (trRow) trRow.style.display = 'none';
+        if (drRow) drRow.style.display = 'none';
+      }
 
       triggerHaptic('success');
 
