@@ -147,7 +147,9 @@ function doPost(e) {
     const colDorm = findColumnIndex(headers, ["yotoqxona", "yotoqxona raqami", "ttj"]);
     const colRoom = findColumnIndex(headers, ["xona", "xona raqami", "room"]);
     const colStatus = findColumnIndex(headers, ["holat", "to'lov holati", "status"]);
-    const colAmount = findColumnIndex(headers, ["summa", "to'langan summa", "amount"]);
+    const colTotalFee = findColumnIndex(headers, ["jami to'lov", "jami qarzdorlik", "belgilangan to'lov", "shartnoma", "jami"]);
+    const colAmount = findColumnIndex(headers, ["summa", "to'langan summa", "to'langan", "amount"]);
+    const colDebt = findColumnIndex(headers, ["qarzdorlik", "qoldiq qarz", "qoldiq qarzdorlik", "qoldiq", "qarz", "debt"]);
     const colReceipt = findColumnIndex(headers, ["kvitansiya", "kvitansiya havolasi", "chek", "receipt"]);
     const colDate = findColumnIndex(headers, ["sana vaqti", "sana", "to'lov sanasi", "date"]);
     const colTg = findColumnIndex(headers, ["telegram foydalanuvchi", "telegram", "tg user"]);
@@ -226,6 +228,18 @@ function doPost(e) {
       studentsSheet.getRange(studentRowIndex, colTg + 1).setValue(tgInfo);
     }
 
+    // Qarzdorlik ustunini yangilash (agar ustun bo'lsa va unda formula bo'lmasa)
+    if (colDebt !== -1) {
+      const debtCell = studentsSheet.getRange(studentRowIndex, colDebt + 1);
+      if (!debtCell.getFormula()) {
+        const totalFeeVal = (colTotalFee !== -1 && !isNaN(studentRowData[colTotalFee]) && studentRowData[colTotalFee] !== "")
+          ? Number(studentRowData[colTotalFee])
+          : 1800000;
+        const newDebt = Math.max(0, totalFeeVal - Number(amount));
+        debtCell.setValue(newDebt);
+      }
+    }
+
     // 5. "To'lovlar" (Tranzaksiyalar tarixi) varag'iga yangi qator qo'shish
     let paymentsSheet = ss.getSheetByName(CONFIG.PAYMENTS_SHEET_NAME);
     if (!paymentsSheet) {
@@ -300,7 +314,9 @@ function getAllStudents() {
   const colDorm = findColumnIndex(headers, ["yotoqxona", "yotoqxona raqami", "ttj"]);
   const colRoom = findColumnIndex(headers, ["xona", "xona raqami", "room"]);
   const colStatus = findColumnIndex(headers, ["holat", "to'lov holati", "status"]);
-  const colAmount = findColumnIndex(headers, ["summa", "to'langan summa", "amount"]);
+  const colTotalFee = findColumnIndex(headers, ["jami to'lov", "jami qarzdorlik", "belgilangan to'lov", "shartnoma", "jami"]);
+  const colAmount = findColumnIndex(headers, ["summa", "to'langan summa", "to'langan", "amount"]);
+  const colDebt = findColumnIndex(headers, ["qarzdorlik", "qoldiq qarz", "qoldiq qarzdorlik", "qoldiq", "qarz", "debt"]);
 
   const students = [];
 
@@ -312,6 +328,20 @@ function getAllStudents() {
     // Agar ID yoki Ism bo'sh bo'lsa qatorni o'tkazib yuboramiz
     if (!id && !fullName) continue;
 
+    const paidAmount = colAmount !== -1 && !isNaN(row[colAmount]) && row[colAmount] !== "" ? Number(row[colAmount]) : 0;
+    
+    // Belgilangan jami to'lov (agar jadvalda bo'lsa, aks holda standart 1 800 000 so'm)
+    let totalFee = 1800000;
+    if (colTotalFee !== -1 && !isNaN(row[colTotalFee]) && row[colTotalFee] !== "") {
+      totalFee = Number(row[colTotalFee]);
+    }
+
+    // Qarzdorlik (jadvalda ustun bo'lsa o'sha qiymat, aks holda jami to'lov - to'langan summa)
+    let debt = Math.max(0, totalFee - paidAmount);
+    if (colDebt !== -1 && !isNaN(row[colDebt]) && row[colDebt] !== "") {
+      debt = Number(row[colDebt]);
+    }
+
     students.push({
       id: id || `ST-${i}`,
       faculty: colFaculty !== -1 ? String(row[colFaculty]).trim() : "Boshqa",
@@ -320,7 +350,9 @@ function getAllStudents() {
       dorm: colDorm !== -1 ? String(row[colDorm]).trim() : "Noma'lum",
       room: colRoom !== -1 ? String(row[colRoom]).trim() : "-",
       status: colStatus !== -1 && row[colStatus] ? String(row[colStatus]).trim() : "To'lanmagan",
-      amount: colAmount !== -1 && !isNaN(row[colAmount]) ? Number(row[colAmount]) : 0
+      amount: paidAmount,
+      totalFee: totalFee,
+      debt: debt
     });
   }
 

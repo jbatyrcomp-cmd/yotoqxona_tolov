@@ -447,6 +447,75 @@
       border: 1px solid var(--warning-border);
     }
 
+    /* Qarzdorlik Bloki */
+    .debt-card-row {
+      margin-top: 10px;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .debt-card-row.has-debt {
+      background: #FEF2F2;
+      border: 1px solid #FECACA;
+    }
+
+    .debt-card-row.no-debt {
+      background: #ECFDF5;
+      border: 1px solid #A7F3D0;
+    }
+
+    .debt-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .debt-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .debt-card-row.has-debt .debt-label {
+      color: #991B1B;
+    }
+
+    .debt-card-row.no-debt .debt-label {
+      color: #065F46;
+    }
+
+    .debt-sub {
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .debt-card-row.has-debt .debt-sub {
+      color: #7F1D1D;
+    }
+
+    .debt-card-row.no-debt .debt-sub {
+      color: #047857;
+    }
+
+    .debt-badge {
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .debt-card-row.has-debt .debt-badge {
+      color: #DC2626;
+    }
+
+    .debt-card-row.no-debt .debt-badge {
+      color: #059669;
+    }
+
     /* ==========================================================================
        6. TO'LOV FORMASI VA FAYL YUKLASH
        ========================================================================== */
@@ -928,6 +997,15 @@
           </div>
         </div>
 
+        <!-- QARZDORLIK BLOKI -->
+        <div class="debt-card-row has-debt" id="cardDebtRow">
+          <div class="debt-info">
+            <div class="debt-label" id="cardDebtLabel">Qarzdorlik summasi:</div>
+            <div class="debt-sub" id="cardDebtSub">Jami to'lov: 1 800 000 so'm</div>
+          </div>
+          <div class="debt-badge" id="cardDebtBadge">1 800 000 so'm</div>
+        </div>
+
         <div style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between;">
           <span style="font-size: 13px; font-weight: 500; color: var(--text-muted);">To'lov holati:</span>
           <span class="status-badge unpaid" id="cardStatusBadge">⏳ To'lanmagan</span>
@@ -1272,9 +1350,16 @@
           const item = document.createElement('div');
           item.className = 'student-item';
           const roomStr = st.room && !String(st.room).toLowerCase().includes('xona') ? `${st.room}-xona` : (st.room || '-');
+          const totalFee = typeof st.totalFee === 'number' && st.totalFee > 0 ? st.totalFee : 1800000;
+          const paidAmount = Number(st.amount) || 0;
+          const debt = typeof st.debt === 'number' ? st.debt : Math.max(0, totalFee - paidAmount);
+          const debtHtml = debt <= 0 
+            ? `<span style="color:var(--success);font-weight:600;">Qarzsiz</span>`
+            : `<span style="color:var(--danger);font-weight:600;">Qarz: ${formatNumber(debt)} so'm</span>`;
+
           item.innerHTML = `
             <div class="student-item-name">${escapeHtml(st.fullName)}</div>
-            <div class="student-item-sub">${escapeHtml(st.dorm)}, ${escapeHtml(roomStr)} (ID: ${escapeHtml(st.id)})</div>
+            <div class="student-item-sub">${escapeHtml(st.dorm)}, ${escapeHtml(roomStr)} • ${debtHtml} (ID: ${escapeHtml(st.id)})</div>
           `;
           item.addEventListener('click', () => {
             selectStudent(st);
@@ -1312,6 +1397,28 @@
       } else {
         cardStatusBadge.classList.add('unpaid');
         cardStatusBadge.innerHTML = '⏳ To\'lanmagan';
+      }
+
+      // Qarzdorlik ma'lumotlarini to'ldirish
+      const totalFee = typeof student.totalFee === 'number' && student.totalFee > 0 ? student.totalFee : 1800000;
+      const paidAmount = Number(student.amount) || 0;
+      const debt = typeof student.debt === 'number' ? student.debt : Math.max(0, totalFee - paidAmount);
+
+      const cardDebtRow = document.getElementById('cardDebtRow');
+      const cardDebtLabel = document.getElementById('cardDebtLabel');
+      const cardDebtSub = document.getElementById('cardDebtSub');
+      const cardDebtBadge = document.getElementById('cardDebtBadge');
+
+      if (debt <= 0) {
+        cardDebtRow.className = 'debt-card-row no-debt';
+        cardDebtLabel.textContent = 'Qarzdorlik holati:';
+        cardDebtSub.textContent = `To'lov to'liq to'langan (Jami: ${formatNumber(totalFee)} so'm)`;
+        cardDebtBadge.textContent = '0 so\'m (Qarz yo\'q)';
+      } else {
+        cardDebtRow.className = 'debt-card-row has-debt';
+        cardDebtLabel.textContent = 'Qarzdorlik summasi:';
+        cardDebtSub.textContent = `Jami to'lov: ${formatNumber(totalFee)} so'm` + (paidAmount > 0 ? ` • To'langan: ${formatNumber(paidAmount)} so'm` : '');
+        cardDebtBadge.textContent = `${formatNumber(debt)} so'm`;
       }
 
       // Kartochka va To'lov formasini ko'rsatish
@@ -1649,19 +1756,19 @@
     // Namunaviy test talabalar ro'yxati (Offline / Demo rejim uchun)
     function getDemoStudents() {
       return [
-        { id: "ST-1001", faculty: "Dasturiy injiniring", group: "DI-21-01", fullName: "Karimov Alisher Baxtiyor o'g'li", dorm: "1-yotoqxona", room: "204", status: "To'lanmagan", amount: 0 },
-        { id: "ST-1002", faculty: "Dasturiy injiniring", group: "DI-21-01", fullName: "Toshmatova Zilola Farhod qizi", dorm: "1-yotoqxona", room: "205", status: "To'lanmagan", amount: 0 },
-        { id: "ST-1003", faculty: "Dasturiy injiniring", group: "DI-21-02", fullName: "Rustamov Jasur Jamshid o'g'li", dorm: "1-yotoqxona", room: "206", status: "To'langan", amount: 1800000 },
-        { id: "ST-1004", faculty: "Dasturiy injiniring", group: "DI-21-02", fullName: "Abdullayeva Shahnoza Akmal qizi", dorm: "1-yotoqxona", room: "207", status: "To'lanmagan", amount: 0 },
-        { id: "ST-1005", faculty: "Kompyuter injiniringi", group: "KI-22-01", fullName: "Xoliqov Bobur Dilshod o'g'li", dorm: "2-yotoqxona", room: "310", status: "To'lanmagan", amount: 0 },
-        { id: "ST-1006", faculty: "Kompyuter injiniringi", group: "KI-22-01", fullName: "Ismoilova Madina Sanjar qizi", dorm: "2-yotoqxona", room: "311", status: "To'lanmagan", amount: 0 },
-        { id: "ST-1007", faculty: "Kompyuter injiniringi", group: "KI-22-02", fullName: "Ergashev Sardor Ulug'bek o'g'li", dorm: "2-yotoqxona", room: "312", status: "To'lanmagan", amount: 0 },
-        { id: "ST-1008", faculty: "Sun'iy intellekt", group: "SI-23-01", fullName: "Nazarov Otabek Sherzod o'g'li", dorm: "3-yotoqxona", room: "105", status: "To'lanmagan", amount: 0 },
-        { id: "ST-1009", faculty: "Sun'iy intellekt", group: "SI-23-01", fullName: "Qodirova Sevara Mahmud qizi", dorm: "3-yotoqxona", room: "106", status: "To'lanmagan", amount: 0 },
-        { id: "ST-1010", faculty: "Kiberxavfsizlik", group: "KX-22-01", fullName: "Rahimov Bekzod Tohir o'g'li", dorm: "3-yotoqxona", room: "214", status: "To'lanmagan", amount: 0 },
-        { id: "ST-1011", faculty: "Kiberxavfsizlik", group: "KX-22-01", fullName: "Yo'ldoshev Diyor Rustam o'g'li", dorm: "3-yotoqxona", room: "215", status: "To'lanmagan", amount: 0 },
-        { id: "ST-1012", faculty: "Iqtisodiyot va moliya", group: "IM-21-03", fullName: "Mirzayev Javohir Botir o'g'li", dorm: "4-yotoqxona", room: "401", status: "To'lanmagan", amount: 0 },
-        { id: "ST-1013", faculty: "Iqtisodiyot va moliya", group: "IM-21-03", fullName: "Hasanova Nilufar Shuhrat qizi", dorm: "4-yotoqxona", room: "402", status: "To'langan", amount: 1800000 }
+        { id: "ST-1001", faculty: "Dasturiy injiniring", group: "DI-21-01", fullName: "Karimov Alisher Baxtiyor o'g'li", dorm: "1-yotoqxona", room: "204", status: "To'lanmagan", totalFee: 1800000, amount: 0, debt: 1800000 },
+        { id: "ST-1002", faculty: "Dasturiy injiniring", group: "DI-21-01", fullName: "Toshmatova Zilola Farhod qizi", dorm: "1-yotoqxona", room: "205", status: "To'lanmagan", totalFee: 1800000, amount: 0, debt: 1800000 },
+        { id: "ST-1003", faculty: "Dasturiy injiniring", group: "DI-21-02", fullName: "Rustamov Jasur Jamshid o'g'li", dorm: "1-yotoqxona", room: "206", status: "To'langan", totalFee: 1800000, amount: 1800000, debt: 0 },
+        { id: "ST-1004", faculty: "Dasturiy injiniring", group: "DI-21-02", fullName: "Abdullayeva Shahnoza Akmal qizi", dorm: "1-yotoqxona", room: "207", status: "To'lanmagan", totalFee: 1800000, amount: 0, debt: 1800000 },
+        { id: "ST-1005", faculty: "Kompyuter injiniringi", group: "KI-22-01", fullName: "Xoliqov Bobur Dilshod o'g'li", dorm: "2-yotoqxona", room: "310", status: "To'lanmagan", totalFee: 1800000, amount: 0, debt: 1800000 },
+        { id: "ST-1006", faculty: "Kompyuter injiniringi", group: "KI-22-01", fullName: "Ismoilova Madina Sanjar qizi", dorm: "2-yotoqxona", room: "311", status: "To'lanmagan", totalFee: 1800000, amount: 0, debt: 1800000 },
+        { id: "ST-1007", faculty: "Kompyuter injiniringi", group: "KI-22-02", fullName: "Ergashev Sardor Ulug'bek o'g'li", dorm: "2-yotoqxona", room: "312", status: "To'lanmagan", totalFee: 1800000, amount: 0, debt: 1800000 },
+        { id: "ST-1008", faculty: "Sun'iy intellekt", group: "SI-23-01", fullName: "Nazarov Otabek Sherzod o'g'li", dorm: "3-yotoqxona", room: "105", status: "To'lanmagan", totalFee: 1800000, amount: 0, debt: 1800000 },
+        { id: "ST-1009", faculty: "Sun'iy intellekt", group: "SI-23-01", fullName: "Qodirova Sevara Mahmud qizi", dorm: "3-yotoqxona", room: "106", status: "To'lanmagan", totalFee: 1800000, amount: 0, debt: 1800000 },
+        { id: "ST-1010", faculty: "Kiberxavfsizlik", group: "KX-22-01", fullName: "Rahimov Bekzod Tohir o'g'li", dorm: "3-yotoqxona", room: "214", status: "To'lanmagan", totalFee: 1800000, amount: 0, debt: 1800000 },
+        { id: "ST-1011", faculty: "Kiberxavfsizlik", group: "KX-22-01", fullName: "Yo'ldoshev Diyor Rustam o'g'li", dorm: "3-yotoqxona", room: "215", status: "To'lanmagan", totalFee: 1800000, amount: 0, debt: 1800000 },
+        { id: "ST-1012", faculty: "Iqtisodiyot va moliya", group: "IM-21-03", fullName: "Mirzayev Javohir Botir o'g'li", dorm: "4-yotoqxona", room: "401", status: "To'lanmagan", totalFee: 1800000, amount: 0, debt: 1800000 },
+        { id: "ST-1013", faculty: "Iqtisodiyot va moliya", group: "IM-21-03", fullName: "Hasanova Nilufar Shuhrat qizi", dorm: "4-yotoqxona", room: "402", status: "To'langan", totalFee: 1800000, amount: 1800000, debt: 0 }
       ];
     }
 
