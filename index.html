@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Yotoqxona To'lov Tizimi</title>
+  <link rel="icon" type="image/png" href="logo.png">
 
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -106,13 +107,23 @@
     .header-icon {
       width: 48px;
       height: 48px;
-      background: var(--primary-light);
-      color: var(--primary);
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      overflow: hidden;
+      padding: 4px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
     }
 
     .header-icon svg {
@@ -818,11 +829,7 @@
     <!-- HEADER: Muassasa va Bo'lim nomi -->
     <header class="app-header">
       <div class="header-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-          stroke-linejoin="round">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-          <polyline points="9 22 9 12 15 12 15 22"></polyline>
-        </svg>
+        <img src="logo.png" alt="Logotip" class="header-logo-img">
       </div>
       <div class="header-title-box">
         <h1>Talabalar Turar Joyi</h1>
