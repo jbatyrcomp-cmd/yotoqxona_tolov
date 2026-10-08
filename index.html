@@ -1271,9 +1271,10 @@
         students.forEach(st => {
           const item = document.createElement('div');
           item.className = 'student-item';
+          const roomStr = st.room && !String(st.room).toLowerCase().includes('xona') ? `${st.room}-xona` : (st.room || '-');
           item.innerHTML = `
             <div class="student-item-name">${escapeHtml(st.fullName)}</div>
-            <div class="student-item-sub">Xona: ${escapeHtml(st.dorm)}, ${escapeHtml(st.room)}-xona (ID: ${escapeHtml(st.id)})</div>
+            <div class="student-item-sub">${escapeHtml(st.dorm)}, ${escapeHtml(roomStr)} (ID: ${escapeHtml(st.id)})</div>
           `;
           item.addEventListener('click', () => {
             selectStudent(st);

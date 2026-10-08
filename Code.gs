@@ -331,9 +331,26 @@ function getAllStudents() {
  * Sarlavha variantlari bo'yicha ustun indeksini topish
  */
 function findColumnIndex(headers, variations) {
+  // 1-bosqich: Avval to'liq mos kelishni (exact match) tekshiramiz
   for (let i = 0; i < headers.length; i++) {
+    const h = String(headers[i]).trim().toLowerCase();
     for (const v of variations) {
-      if (headers[i] === v || headers[i].includes(v)) {
+      if (h === String(v).trim().toLowerCase()) {
+        return i;
+      }
+    }
+  }
+
+  // 2-bosqich: Agar to'liq mos kelmasa, qisman mos kelishni (substring) tekshiramiz
+  // DIQQAT: "xona" qidirilganda "yotoqxona" ustuniga adashib mos kelmasligi shart!
+  for (let i = 0; i < headers.length; i++) {
+    const h = String(headers[i]).trim().toLowerCase();
+    for (const v of variations) {
+      const target = String(v).trim().toLowerCase();
+      if (target.includes("xona") && h.includes("yotoqxona")) {
+        continue;
+      }
+      if (h.includes(target)) {
         return i;
       }
     }
