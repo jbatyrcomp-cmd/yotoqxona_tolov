@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Qo'llanma — Yotoqxona To'lov Tizimi</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0F172A;
+      color: #F8FAFC;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .container {
+      max-width: 680px;
+      width: 100%;
+      background: #1E293B;
+      border: 1px solid #334155;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+      text-align: center;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .header img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      background: #fff;
+      border-radius: 8px;
+      padding: 2px;
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+    p.desc {
+      font-size: 14px;
+      color: #94A3B8;
+      margin-bottom: 20px;
+    }
+    .video-frame {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 2px solid #3B82F6;
+      background: #000;
+      box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .video-frame img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: #2563EB;
+      color: #fff;
+      border: none;
+    }
+    .btn-primary:hover {
+      background: #1D4ED8;
+    }
+    .btn-secondary {
+      background: #334155;
+      color: #F8FAFC;
+      border: 1px solid #475569;
+    }
+    .btn-secondary:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <img src="logo.png" alt="Logo">
+      <h1>Yotoqxona To'lov Bot — Video Qo'llanma</h1>
+    </div>
+    <p class="desc">Mini App orqali talaba qidirish, qarzdorlikni tekshirish va chek yuborish jarayoni namoyishi</p>
+
+    <div class="video-frame">
+      <img src="tolov_bot_demo.webp" alt="Video Qo'llanma">
+    </div>
+
+    <div class="actions">
+      <a href="tolov_bot_demo.webp" download="yotoqxona_tolov_qo'llanma.webp" class="btn btn-primary">
+        📥 Videoni yuklab olish
+      </a>
+      <a href="https://yotoqxonatolov.vercel.app" target="_blank" class="btn btn-secondary">
+        🌐 Ilovani ochish (Vercel)
+      </a>
+    </div>
+  </div>
+
+</body>
+</html>
