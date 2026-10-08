@@ -232,9 +232,9 @@ function doPost(e) {
       studentsSheet.getRange(studentRowIndex, colAmount + 1).setValue(newTotalPaid);
     }
     if (colReceipt !== -1) {
-      const prevReceipt = (studentRowData[colReceipt]) ? String(studentRowData[colReceipt]).trim() : "";
-      const combinedReceipts = prevReceipt ? `${prevReceipt}\n${receiptUrl}` : receiptUrl;
-      studentsSheet.getRange(studentRowIndex, colReceipt + 1).setValue(combinedReceipts);
+      const receiptCell = studentsSheet.getRange(studentRowIndex, colReceipt + 1);
+      const richText = buildReceiptRichText(receiptCell, receiptUrl, currentPayment);
+      receiptCell.setRichTextValue(richText);
     }
     if (colDate !== -1) {
       studentsSheet.getRange(studentRowIndex, colDate + 1).setValue(displayDate);
@@ -274,10 +274,18 @@ function doPost(e) {
       studentFaculty,
       studentGroup,
       currentPayment,
-      receiptUrl,
+      "", // Quyida RichText giperhavola bilan to'ldiriladi
       trxStatus,
       formatTelegramUser(telegramUser)
     ]);
+
+    // To'lovlar varag'idagi chek havolasini chiroyli ko'k giperhavola qilish
+    const lastPayRow = paymentsSheet.getLastRow();
+    const payLinkRichText = SpreadsheetApp.newRichTextValue()
+      .setText("Chekni ko'rish 📄")
+      .setLinkUrl(0, 15, receiptUrl)
+      .build();
+    paymentsSheet.getRange(lastPayRow, 8).setRichTextValue(payLinkRichText);
 
     // Muvaffaqiyatli natija
     return createJsonResponse({
@@ -570,5 +578,168 @@ function updateStudentSheetColumns() {
 
   sheet.getRange(1, 1, newRows.length, targetHeaders.length).setValues(newRows);
   styleHeaderRow(sheet);
+  SpreadsheetApp.flush();
+}
+
+/**
+ * ============================================================================
+ * RICHTEXT GIPERHAVOLA YASASH (VARIANT A: IXCHAM VA BOSILADIGAN)
+ * ============================================================================
+ * Har bir chekni:
+ * "1-chek (1 000 000 so'm)"
+ * "2-chek (800 000 so'm)"
+ * ko'rinishida alohida bosiladigan ko'k giperhavola qilib beradi.
+ */
+function buildReceiptRichText(cell, newReceiptUrl, newAmount) {
+  const existingRichText = cell.getRichTextValue();
+  const existingItems = [];
+
+  if (existingRichText) {
+    const runs = existingRichText.getRuns();
+    for (const run of runs) {
+      const url = run.getLinkUrl();
+      const text = run.getText().trim();
+      if (url) {
+        existingItems.push({ label: text, url: url });
+      }
+    }
+
+    // Agar RichText ichida havola bo'lmasa, oddiy matndan URL larni qidiramiz
+    if (existingItems.length === 0) {
+      const cellText = cell.getValue() ? String(cell.getValue()) : "";
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      let match;
+      let count = 1;
+      while ((match = urlRegex.exec(cellText)) !== null) {
+        existingItems.push({
+          label: `${count}-chek`,
+          url: match[1]
+        });
+        count++;
+      }
+    }
+  }
+
+  // Yangi chek ma'lumotlarini qo'shamiz
+  const nextNum = existingItems.length + 1;
+  const formattedAmt = formatMoneyString(newAmount);
+  const newLabel = `${nextNum}-chek (${formattedAmt} so'm)`;
+  existingItems.push({ label: newLabel, url: newReceiptUrl });
+
+  // RichText matni va har bir havolaning pozitsiyasini hisoblash
+  let fullText = "";
+  const linkRanges = [];
+
+  for (let i = 0; i < existingItems.length; i++) {
+    const item = existingItems[i];
+    const start = fullText.length;
+    fullText += item.label;
+    const end = fullText.length;
+    linkRanges.push({ start: start, end: end, url: item.url });
+
+    if (i < existingItems.length - 1) {
+      fullText += "\n";
+    }
+  }
+
+  const builder = SpreadsheetApp.newRichTextValue().setText(fullText);
+  for (const r of linkRanges) {
+    builder.setLinkUrl(r.start, r.end, r.url);
+  }
+
+  return builder.build();
+}
+
+/**
+ * Raqamlarni chiroyli ajratilgan ko'rinishga keltirish (masalan: 1 000 000)
+ */
+function formatMoneyString(val) {
+  if (!val || isNaN(val)) return "0";
+  return Number(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+/**
+ * ============================================================================
+ * MAVJUD BARCHA ESKI CHEKLARNI KO'K HAVOLAGA AYLANTIRISH (BIR MARTALIK)
+ * ============================================================================
+ * Ushbu funksiyani Apps Script-da bir marta 'Run' qilsangiz, "Talabalar" va
+ * "To'lovlar" jadvallaridagi barcha mavjud qora matnli cheklarni ko'k
+ * giperhavolaga aylantirib beradi!
+ */
+function formatAllExistingLinks() {
+  const ss = getSpreadsheet();
+
+  // 1. "Talabalar" varag'ini yangilash
+  const studentsSheet = ss.getSheetByName(CONFIG.STUDENTS_SHEET_NAME);
+  if (studentsSheet) {
+    const lastRow = studentsSheet.getLastRow();
+    if (lastRow > 1) {
+      const data = studentsSheet.getDataRange().getValues();
+      const headers = data[0].map(h => String(h).trim().toLowerCase());
+      const colReceipt = findColumnIndex(headers, ["kvitansiya", "kvitansiya havolasi", "chek"]);
+
+      if (colReceipt !== -1) {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+        for (let i = 1; i < data.length; i++) {
+          const cellValue = String(data[i][colReceipt] || "").trim();
+          if (!cellValue || !cellValue.includes("http")) continue;
+
+          const urls = [];
+          let match;
+          while ((match = urlRegex.exec(cellValue)) !== null) {
+            urls.push(match[1]);
+          }
+
+          if (urls.length > 0) {
+            const rowNum = i + 1;
+            const cell = studentsSheet.getRange(rowNum, colReceipt + 1);
+
+            let fullText = "";
+            const ranges = [];
+
+            for (let j = 0; j < urls.length; j++) {
+              const u = urls[j];
+              const label = urls.length === 1 ? `1-chek (Ko'rish 📄)` : `${j + 1}-chek (Ko'rish 📄)`;
+              const start = fullText.length;
+              fullText += label;
+              const end = fullText.length;
+              ranges.push({ start: start, end: end, url: u });
+              if (j < urls.length - 1) {
+                fullText += "\n";
+              }
+            }
+
+            const builder = SpreadsheetApp.newRichTextValue().setText(fullText);
+            for (const r of ranges) {
+              builder.setLinkUrl(r.start, r.end, r.url);
+            }
+            cell.setRichTextValue(builder.build());
+          }
+        }
+      }
+    }
+  }
+
+  // 2. "To'lovlar" varag'ini yangilash
+  const paymentsSheet = ss.getSheetByName(CONFIG.PAYMENTS_SHEET_NAME);
+  if (paymentsSheet) {
+    const pLastRow = paymentsSheet.getLastRow();
+    if (pLastRow > 1) {
+      const pData = paymentsSheet.getDataRange().getValues();
+      for (let i = 1; i < pData.length; i++) {
+        const pUrl = String(pData[i][7] || "").trim();
+        if (pUrl && pUrl.startsWith("http")) {
+          const rowNum = i + 1;
+          const payLink = SpreadsheetApp.newRichTextValue()
+            .setText("Chekni ko'rish 📄")
+            .setLinkUrl(0, 15, pUrl)
+            .build();
+          paymentsSheet.getRange(rowNum, 8).setRichTextValue(payLink);
+        }
+      }
+    }
+  }
+
   SpreadsheetApp.flush();
 }
